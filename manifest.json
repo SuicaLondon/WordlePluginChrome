@@ -1,0 +1,14 @@
+{
+  "name": "Wordle Extension",
+  "description": "This extension can kill your interest of Wordle.",
+  "version": "1.0",
+  "manifest_version": 3,
+  "permissions": ["storage", "activeTab", "scripting"],
+  "action": {},
+  "content_scripts": [
+    {
+      "matches": ["https://www.nytimes.com/games/wordle/index.html"],
+      "js": ["killer.js"]
+    }
+  ]
+}
