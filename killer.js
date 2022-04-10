@@ -8,6 +8,24 @@ const slot = gameThemeManager.shadowRoot.querySelector('slot')
 const board = slot.assignedElements()[1].querySelector('#board')
 const rows = slot.assignedElements()[1].querySelectorAll('game-row')
 
+// Button and hint view
+const e = document.createElement('div')
+e.innerHTML = `
+    <div id="hint-button" style="position: fixed; right: 20px; top: 50px; width: 50px; height: 50px; border-radius: 50%; border: 1px solid #ddd; background-color: #818384; display: flex; justify-content: center; align-items: center; color: #fff; opacity: .7; cursor: pointer; z-index: 5;">
+        Hint
+    </div>
+
+    <div id="word-view" style="display: none; position: fixed; right: 20px; top: 50px; padding-right: 50px; width: 300px; height: 350px; flex-wrap: wrap; background-color: #818384; color: #fff;">
+        <div id="possible-words" style="margin-bottom: 1rem; width: 300px; height: 250px; word-wrap:break-word; overflow: scroll;"></div>
+        <div id="recommand-words" "width: 300px; height: 50px; overflow: scroll;"></div>
+    </div>
+`
+document.body.appendChild(e)
+const button = document.getElementById('hint-button')
+const wordView = document.getElementById('word-view')
+const possibleWords = document.getElementById('possible-words')
+const recommandWords = document.getElementById('recommand-words')
+
 const corrects = []
 const presents = []
 const absents = []
@@ -20,10 +38,13 @@ const mutationObserver = new MutationObserver(entries => {
         for (let i = 0; i < entries.length; i++) {
             wordsBuffer = wordsBuffer.filter(word => word[i] === entries[i].target.attributes[0].value)
         }
+        recommandWords.innerText = wordsBuffer.join(', ')
     } else {
         for (let i = entries.length - 5; i < entries.length; i++) {
             setAnswers(entries[i].target.attributes[0].value, entries[i].target.attributes[1].value, 5 - i)
         }
+        words = filterWords()
+        possibleWords.innerText = words.join(', ')
     }
 })
 for (let i = 0; i < rows.length; i++) {
@@ -74,3 +95,13 @@ function filterWords() {
 }
 
 words = filterWords()
+
+button.addEventListener('click', () => {
+    if (wordView.style.display === 'none') {
+        wordView.style.display = 'flex'
+        possibleWords.innerText = words.join(', ')
+        recommandWords.innerText = wordsBuffer.join(', ')
+    } else {
+        wordView.style.display = 'none'
+    }
+})
