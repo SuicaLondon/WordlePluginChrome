@@ -15,19 +15,17 @@ e.innerHTML = `
         Hint
     </div>
 
-    <div id="word-view" style="display: none; position: fixed; right: 20px; top: 50px; padding-right: 50px; width: 300px; height: 350px; flex-wrap: wrap; background-color: #818384; color: #fff;">
-        <div id="possible-words" style="margin-bottom: 1rem; width: 300px; height: 250px; word-wrap:break-word; overflow: scroll;"></div>
-        <div id="recommand-words" "width: 300px; height: 50px; overflow: scroll;"></div>
+    <div id="word-view" style="display: none; position: fixed; right: 20px; top: 50px; padding: 10px; padding-right: 50px; width: 280px; height: 350px; flex-wrap: wrap; background-color: #818384; color: #fff; border-radius: 1rem;">
+        <div id="possible-words" style="margin-bottom: 1rem; width: 300px; height: 100%; word-wrap:break-word; overflow: scroll;"></div>
     </div>
 `
 document.body.appendChild(e)
 const button = document.getElementById('hint-button')
 const wordView = document.getElementById('word-view')
 const possibleWords = document.getElementById('possible-words')
-const recommandWords = document.getElementById('recommand-words')
 
 const corrects = []
-const presents = []
+const presents = Array(5).fill(null).map(() => [])
 const absents = []
 let words = common
 let wordsBuffer = []
@@ -36,14 +34,17 @@ const mutationObserver = new MutationObserver(entries => {
     if (last.attributeName === 'letter') {
         wordsBuffer = words
         for (let i = 0; i < entries.length; i++) {
-            wordsBuffer = wordsBuffer.filter(word => word[i] === entries[i].target.attributes[0].value)
+            if (entries[i].target.attributes.length > 0) {
+                wordsBuffer = wordsBuffer.filter(word => word[i] === entries[i].target.attributes[0].value)
+            }
         }
-        recommandWords.innerText = wordsBuffer.join(', ')
+        possibleWords.innerText = wordsBuffer.join(', ')
     } else {
-        for (let i = entries.length - 5; i < entries.length; i++) {
-            setAnswers(entries[i].target.attributes[0].value, entries[i].target.attributes[1].value, 5 - i)
+        for (let i = 0; i < entries.length; i++) {
+            setAnswers(entries[i].target.attributes[0].value, entries[i].target.attributes[1].value, i)
         }
         words = filterWords()
+        wordsBuffer = words
         possibleWords.innerText = words.join(', ')
     }
 })
@@ -68,15 +69,18 @@ function setAnswers(letter, evalution, index) {
     if (evalution === 'correct') {
         corrects[index] = letter
     } else if (evalution === 'present') {
-        const answer = { letter, index }
-        presents.push(answer)
+        presents[index].push(letter)
     } else {
         absents.push(letter)
     }
 }
 
 function filterWords() {
+    const presentsFlat = presents.flat()
     return common.filter(word => {
+        for (let i = 0; i < presentsFlat.length; i++) {
+            if (!word.includes(presentsFlat[i])) return false
+        }
         for (let i = 0; i < word.length; i++) {
             const character = word[i]
             if (absents.indexOf(character) !== -1) {
@@ -85,22 +89,19 @@ function filterWords() {
             if (corrects[i] && corrects[i] !== character) {
                 return false
             }
-            const char = presents.find(presnet => presnet.letter === character)
-            if (char && char.index === i) {
+            if (presentsFlat.indexOf(character) !== -1 && presents[i].indexOf(character) !== -1) {
                 return false
             }
         }
         return true
     })
 }
-
 words = filterWords()
 
 button.addEventListener('click', () => {
     if (wordView.style.display === 'none') {
         wordView.style.display = 'flex'
         possibleWords.innerText = words.join(', ')
-        recommandWords.innerText = wordsBuffer.join(', ')
     } else {
         wordView.style.display = 'none'
     }
